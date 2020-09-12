@@ -23,6 +23,12 @@ SavedLocation_t::SavedLocation_t() : m_bCrouched(false), m_vecPos(vec3_origin), 
 {
     m_szTargetName[0] = '\0';
     m_szTargetClassName[0] = '\0';
+    m_Collectibles = new CMomentumPlayerCollectibles;
+}
+
+SavedLocation_t::~SavedLocation_t()
+{
+    delete m_Collectibles;
 }
 
 SavedLocation_t::SavedLocation_t(CMomentumPlayer* pPlayer, int components /*= SAVELOC_ALL*/) : SavedLocation_t()
@@ -83,6 +89,9 @@ SavedLocation_t::SavedLocation_t(CMomentumPlayer* pPlayer, int components /*= SA
             m_iTimerTickOffset = -1;
         }
     }
+
+    if ( components & SAVELOC_COLLECTIBLES )
+        *m_Collectibles = pPlayer->m_Collectibles;
 }
 
 void SavedLocation_t::Save(KeyValues* kvCP) const
@@ -130,6 +139,9 @@ void SavedLocation_t::Save(KeyValues* kvCP) const
 
     if ( m_savedComponents & SAVELOC_TIME )
         kvCP->SetInt("time", m_iTimerTickOffset);
+        
+    if ( m_savedComponents & SAVELOC_COLLECTIBLES )
+        m_Collectibles->SaveToKeyValues(kvCP);
 }
 
 void SavedLocation_t::Load(KeyValues* pKv)
@@ -149,6 +161,7 @@ void SavedLocation_t::Load(KeyValues* pKv)
     m_iToggledButtons = pKv->GetInt("toggledButtons");
     entEventsState.LoadFromKeyValues(pKv);
     m_iTimerTickOffset = pKv->GetInt("time", -1);
+    m_Collectibles->LoadFromKeyValues(pKv);
 }
 
 void SavedLocation_t::Teleport(CMomentumPlayer* pPlayer)
@@ -209,6 +222,9 @@ void SavedLocation_t::Teleport(CMomentumPlayer* pPlayer)
             pPlayer->m_Data.m_iStartTick = 0;
         }
     }
+
+    if ( m_savedComponents & SAVELOC_COLLECTIBLES )
+        pPlayer->m_Collectibles = *m_Collectibles;
 }
 
 bool SavedLocation_t::Read(CUtlBuffer &mem)
